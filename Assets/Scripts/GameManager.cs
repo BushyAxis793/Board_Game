@@ -38,6 +38,7 @@ public class GameManager : MonoBehaviour
 
     public int activePlayer;
     bool switchingPlayer;
+    bool turnPossible = true;
 
     //HUMAN INPUTS
     //GAMEOBJECT FOR OUR BUTTON
@@ -62,14 +63,22 @@ public class GameManager : MonoBehaviour
                     break;
                 case States.ROLL_DICE:
                     {
+                        if (turnPossible)
+                        {
+
                         StartCoroutine(RollDiceDelay());
                         state = States.WAITING;
+                        }
                     }
                     break;
                 case States.SWITCH_PLAYER:
                     {
+                        if (turnPossible)
+                        {
+
                         StartCoroutine(SwitchPlayer());
                         state = States.WAITING;
+                        }
 
                     }
                     break;
@@ -239,6 +248,14 @@ public class GameManager : MonoBehaviour
         state = States.ROLL_DICE;
     }
 
+    public void ReportTurnPossible(bool possible)
+    {
+        turnPossible = possible;
+    }
 
+    public void ReportWinning()
+    {
+        playerList[activePlayer].hasWon = true;
+    }
 
 }

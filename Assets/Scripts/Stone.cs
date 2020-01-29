@@ -33,6 +33,10 @@ public class Stone : MonoBehaviour
     [Header("SELECTOR")]
     public GameObject selector;
 
+    //ARC MOVEMENT
+    float amplitude = 0.5f;
+    float cTime = 0f;
+
     private void Start()
     {
         startNodeIndex = commonRoute.RequestPosition(startNode.gameObject.transform);
@@ -55,37 +59,30 @@ public class Stone : MonoBehaviour
         }
     }
 
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Space) && !isMoving)
-        {
-            steps = Random.Range(1, 7);
-            Debug.Log("Dice number is =" + steps);
-            if (doneSteps + steps < fullRoute.Count)
-            {
-                StartCoroutine(MoveOut());
-            }
-            else
-            {
-                Debug.Log("Number is too high");
-            }
-        }
-    }
+
     public void LeaveBase()
     {
         steps = 1;
         isOut = true;
         routePosition = 0;
         //START COUROUTINE
-        StartCoroutine(MoveOut());
+        //StartCoroutine(MoveOut());
     }
 
 
     bool MoveToNextNode(Vector3 goalPos, float speed)
     {
         return goalPos != (transform.position = Vector3.MoveTowards(transform.position, goalPos, speed * Time.deltaTime));
+    }
 
+    bool MoveInArcToNextNode(Vector3 startPos, Vector3 goalPos, float speed)
+    {
+        cTime += speed * Time.deltaTime;
+        Vector3 myPosition = Vector3.Lerp(startPos, goalPos, cTime);
 
+        myPosition.y += amplitude * Mathf.Sin(Mathf.Clamp01(cTime) * Mathf.PI);
+
+        return goalPos != (transform.position = Vector3.Lerp(transform.position, goalPos, cTime));
     }
 
     public bool ReturnIsOut()
@@ -102,12 +99,16 @@ public class Stone : MonoBehaviour
 
         while (steps > 0)
         {
-            //routePosition++;
+            routePosition++;
 
             Vector3 nextPos = fullRoute[routePosition].gameObject.transform.position;
-            while (MoveToNextNode(nextPos, 8f)) { yield return null; }
+            Vector3 startPos = baseNode.gameObject.transform.position;
+
+            //while (MoveToNextNode(nextPos, 8f)) { yield return null; }
+            while (MoveInArcToNextNode(startPos, nextPos, 4f)){ yield return null; }
 
             yield return new WaitForSeconds(0.1f);
+            cTime = 0;
             steps--;
             doneSteps++;
 
@@ -119,11 +120,12 @@ public class Stone : MonoBehaviour
         if (goalNode.isTaken)
         {
             //RETURN TO START BASE NODE
+            goalNode.stone.ReturnToBase();
         }
 
         currentNode.stone = null;
         currentNode.isTaken = false;
-            
+
         goalNode.stone = this;
         goalNode.isTaken = true;
         currentNode = goalNode;
@@ -131,7 +133,68 @@ public class Stone : MonoBehaviour
 
         //REPORT BACK TO GAMEMANAGER
         //SWITCH THE PLAYER
-        GameManager.instance.state = GameManager.States.SWITCH_PLAYER;
+
+    }
+
+    IEnumerator Move(int diceNumber)
+    {
+        if (isMoving)
+        {
+            yield break;
+        }
+        isMoving = true;
+
+        while (steps > 0)
+        {
+            routePosition++;
+
+            Vector3 nextPos = fullRoute[routePosition].gameObject.transform.position;
+            Vector3 startPos = fullRoute[routePosition-1].gameObject.transform.position;
+            //while (MoveToNextNode(nextPos, 8f)) { yield return null; }
+            while (MoveInArcToNextNode(startPos, nextPos, 4f))
+            {
+                yield return null;
+            }
+            yield return new WaitForSeconds(0.1f);
+            cTime = 0;
+            steps--;
+            doneSteps++;
+
+        }
+
+
+        //UPDATE NODE
+        goalNode = fullRoute[routePosition];
+        //ChECK FOR KICKING OTHER STONE
+        if (goalNode.isTaken)
+        {
+            //RETURN TO START BASE NODE
+            goalNode.stone.ReturnToBase();
+        }
+
+        currentNode.stone = null;
+        currentNode.isTaken = false;
+
+        goalNode.stone = this;
+        goalNode.isTaken = true;
+        currentNode = goalNode;
+        goalNode = null;
+
+        if (WinCondition())
+        {
+            GameManager.instance.ReportWinning();
+        }
+
+        if (diceNumber < 6)
+        {
+
+            GameManager.instance.state = GameManager.States.SWITCH_PLAYER;
+
+        }
+        else
+        {
+            GameManager.instance.state = GameManager.States.ROLL_DICE;
+        }
         isMoving = false;
     }
 
@@ -168,4 +231,39 @@ public class Stone : MonoBehaviour
         steps = diceNumber;
         StartCoroutine(MoveOut());
     }
+
+    public void ReturnToBase()
+    {
+        StartCoroutine(Return());
+    }
+
+    IEnumerator Return()
+    {
+        GameManager.instance.ReportTurnPossible(false);
+        routePosition = 0;
+        currentNode = null;
+        goalNode = null;
+        isOut = false;
+        doneSteps = 0;
+
+        Vector3 baseNodePosition = baseNode.gameObject.transform.position;
+        while (MoveToNextNode(baseNodePosition, 100f))
+        {
+            yield return null;
+        }
+        GameManager.instance.ReportTurnPossible(true);
+    }
+
+    bool WinCondition()
+    {
+        for (int i = 0; i < finalRoute.childNodeList.Count; i++)
+        {
+            if (!finalRoute.childNodeList[i].GetComponent<Node>().isTaken) 
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }
