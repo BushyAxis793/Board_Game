@@ -41,6 +41,8 @@ public class Stone : MonoBehaviour
     {
         startNodeIndex = commonRoute.RequestPosition(startNode.gameObject.transform);
         CreateFullRoute();
+
+        SetSelector(false);
     }
 
     void CreateFullRoute()
@@ -105,7 +107,7 @@ public class Stone : MonoBehaviour
             Vector3 startPos = baseNode.gameObject.transform.position;
 
             //while (MoveToNextNode(nextPos, 8f)) { yield return null; }
-            while (MoveInArcToNextNode(startPos, nextPos, 4f)){ yield return null; }
+            while (MoveInArcToNextNode(startPos, nextPos, 4f)) { yield return null; }
 
             yield return new WaitForSeconds(0.1f);
             cTime = 0;
@@ -149,7 +151,7 @@ public class Stone : MonoBehaviour
             routePosition++;
 
             Vector3 nextPos = fullRoute[routePosition].gameObject.transform.position;
-            Vector3 startPos = fullRoute[routePosition-1].gameObject.transform.position;
+            Vector3 startPos = fullRoute[routePosition - 1].gameObject.transform.position;
             //while (MoveToNextNode(nextPos, 8f)) { yield return null; }
             while (MoveInArcToNextNode(startPos, nextPos, 4f))
             {
@@ -258,7 +260,7 @@ public class Stone : MonoBehaviour
     {
         for (int i = 0; i < finalRoute.childNodeList.Count; i++)
         {
-            if (!finalRoute.childNodeList[i].GetComponent<Node>().isTaken) 
+            if (!finalRoute.childNodeList[i].GetComponent<Node>().isTaken)
             {
                 return false;
             }
@@ -266,4 +268,28 @@ public class Stone : MonoBehaviour
         return true;
     }
 
+    //---------------------------------------------------HUMAN INPUT-------------------------------------------//
+
+    public void SetSelector(bool on)
+    {
+        selector.SetActive(on);
+        //THIS IS FOR HAVING THE CLICK ABILITY
+        hasTurn = on;
+    }
+
+    void OnMouseDown()
+    {
+        if (hasTurn)
+        {
+            if (!isOut)
+            {
+                LeaveBase();
+            }
+            else
+            {
+                StartTheMove(GameManager.instance.rolledHumanDice);
+            }
+        }
+        GameManager.instance.DeactivateSelectors();
+    }
 }
