@@ -46,6 +46,7 @@ public class GameManager : MonoBehaviour
     public GameObject rollButton;
     [HideInInspector] public int rolledHumanDice;
 
+    public Dice dice;
 
     void Awake()
     {
@@ -131,29 +132,45 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void RollDice()
+    void CPUDice()
     {
-        int diceNumber = Random.Range(1, 7);
+        dice.RollDice();
+    }
 
+    public void RollDice(int _diceNumber)//CALL THIS FROM DICE
+    {
+        int diceNumber = _diceNumber;//Random.Range(1, 7);
 
-        if (diceNumber == 6)
+        if (playerList[activePlayer].playerType == Entity.PlayerTypes.CPU)
         {
-            //check the start node
-            CheckStartNode(diceNumber);
+
+            if (diceNumber == 6)
+            {
+                //check the start node
+                CheckStartNode(diceNumber);
+            }
+
+            if (diceNumber < 6)
+            {
+                //checkfor kick
+                MoveAStone(diceNumber);
+            }
         }
 
-        if (diceNumber < 6)
+        if (playerList[activePlayer].playerType == Entity.PlayerTypes.HUMAN)
         {
-            //checkfor kick
-            MoveAStone(diceNumber);
+            rolledHumanDice = _diceNumber;
+            HumanRollDice();
         }
+
         Debug.Log("dice rolled number " + diceNumber);
     }
 
     IEnumerator RollDiceDelay()
     {
         yield return new WaitForSeconds(2);
-        RollDice();
+        //RollDice();
+        CPUDice();
     }
 
     void CheckStartNode(int diceNumber)
@@ -319,9 +336,15 @@ public class GameManager : MonoBehaviour
     }
 
     //THIS SITS ON THE ROLL DICE BUTTON
+    public void HumanRoll()
+    {
+        dice.RollDice();
+        ActivateButton(false);
+    }
+
+    //THIS SITS ON THE ROLL DICE BUTTON
     public void HumanRollDice()
     {
-        ActivateButton(false);
 
         //ROLL DICE
         rolledHumanDice = Random.Range(1, 7);
