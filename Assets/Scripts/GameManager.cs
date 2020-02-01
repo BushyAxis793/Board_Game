@@ -51,11 +51,26 @@ public class GameManager : MonoBehaviour
     void Awake()
     {
         instance = this;
+
+        for (int i = 0; i < playerList.Count; i++)
+        {
+            if (SaveSettings.players[i] == "HUMAN")
+                playerList[i].playerType = Entity.PlayerTypes.HUMAN;
+            if (SaveSettings.players[i] == "CPU")
+                playerList[i].playerType = Entity.PlayerTypes.CPU;
+
+
+
+        }
     }
 
     void Start()
     {
         ActivateButton(false);
+
+        int randomPlayer = Random.Range(0, playerList.Count);
+        activePlayer = randomPlayer;
+        Info.instance.ShowMessage(playerList[activePlayer].playerName + " starts first!");
     }
 
     void Update()
@@ -164,6 +179,7 @@ public class GameManager : MonoBehaviour
         }
 
         Debug.Log("dice rolled number " + diceNumber);
+        Info.instance.ShowMessage(playerList[activePlayer].playerName + " has rolled" + _diceNumber);
     }
 
     IEnumerator RollDiceDelay()
@@ -261,6 +277,7 @@ public class GameManager : MonoBehaviour
 
         //SWITCHING PLAYER
         state = States.SWITCH_PLAYER;
+
     }
 
     IEnumerator SwitchPlayer()
@@ -306,6 +323,7 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        Info.instance.ShowMessage(playerList[activePlayer].playerName + "'s turn!");
         state = States.ROLL_DICE;
     }
 
@@ -317,6 +335,15 @@ public class GameManager : MonoBehaviour
     public void ReportWinning()
     {
         playerList[activePlayer].hasWon = true;
+        //SAVE WOMEWHERE
+        for (int i = 0; i < SaveSettings.winners.Length; i++)
+        {
+            if (SaveSettings.winners[i] == "")
+            {
+                SaveSettings.winners[i] = playerList[activePlayer].playerName;
+                break;
+            }
+        }
     }
     //----------------------------------------------HUMAN INPUT--------------------------------------------//
     void ActivateButton(bool on)

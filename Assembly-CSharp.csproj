@@ -66,6 +66,10 @@
     <Compile Include="Assets\Scripts\Dice.cs" />
     <Compile Include="Assets\Scripts\DiceSide.cs" />
     <Compile Include="Assets\Scripts\GameManager.cs" />
+    <Compile Include="Assets\Scripts\GameOver.cs" />
+    <Compile Include="Assets\Scripts\Info.cs" />
+    <Compile Include="Assets\Scripts\Menu\GameSettings.cs" />
+    <Compile Include="Assets\Scripts\Menu\StartGame.cs" />
     <Compile Include="Assets\Scripts\Node.cs" />
     <Compile Include="Assets\Scripts\Route.cs" />
     <Compile Include="Assets\Scripts\Stone.cs" />
